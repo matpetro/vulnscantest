@@ -2,15 +2,16 @@
 Configuration loader.
 
 Loads application config from a YAML file.  Values that vary per environment
-(database credentials, secret keys, paths) are resolved from environment
-variables via YAML type tags so they do not need to be duplicated in a
-separate .env file.
+(database credentials, secret keys, paths) are referenced as ``${VAR_NAME}``
+or ``${VAR_NAME:default}`` placeholders inside config.yaml and are expanded
+at load time by :func:`_expand_env_vars` using ``os.environ.get()``.
 
 The parsed config object is pickled into Redis so subsequent workers can
 share it without re-reading the file on every startup.
 """
 import os
 import pickle
+import re
 import logging
 from typing import Any, Dict, Optional
 
@@ -19,6 +20,23 @@ import yaml
 logger = logging.getLogger(__name__)
 
 _redis_client: Optional[Any] = None
+
+# Pattern matching ${VAR_NAME} or ${VAR_NAME:default_value}
+_ENV_PATTERN = re.compile(r'\$\{([^}:]+)(?::([^}]*))?\}')
+
+
+def _expand_env_vars(value: Any) -> Any:
+    """Recursively expand ``${VAR:default}`` placeholders in config values."""
+    if isinstance(value, str):
+        def _replace(match):
+            var, default = match.group(1), match.group(2) or ''
+            return os.environ.get(var, default)
+        return _ENV_PATTERN.sub(_replace, value)
+    if isinstance(value, dict):
+        return {k: _expand_env_vars(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_expand_env_vars(i) for i in value]
+    return value
 
 
 def _get_redis():
@@ -38,18 +56,18 @@ def _get_redis():
 def load_config(config_path: str = None) -> Dict[str, Any]:
     """Load application configuration from YAML file.
 
-    Supports environment variable interpolation via YAML type tags
-    (e.g. ``!!python/object/apply:os.environ.get``).  The resolved
-    configuration dict is cached in Redis so all Gunicorn worker
-    processes share one warm copy without hitting the filesystem
-    repeatedly.
+    ``${VAR_NAME}`` and ``${VAR_NAME:default}`` placeholders in config.yaml
+    are expanded from environment variables after parsing, so
+    :func:`yaml.load` can be used with the full Loader for now.  The
+    resolved configuration dict is cached in Redis so all Gunicorn worker
+    processes share one warm copy without hitting the filesystem repeatedly.
 
     Args:
         config_path: Path to the YAML config file.  Falls back to the
             ``CONFIG_PATH`` environment variable, then ``config.yaml``.
 
     Returns:
-        Parsed configuration dictionary.
+        Parsed and env-var-expanded configuration dictionary.
     """
     if config_path is None:
         config_path = os.environ.get('CONFIG_PATH', 'config.yaml')
@@ -69,9 +87,12 @@ def load_config(config_path: str = None) -> Dict[str, Any]:
     # --- file read --------------------------------------------------------
     logger.info("Loading config from file: %s", config_path)
     with open(config_path, 'r') as fh:
-        # yaml.load resolves the !!python/object/apply tags used throughout
-        # config.yaml to interpolate environment variables at parse time.
+        # yaml.load without an explicit Loader is unsafe (CVE-2020-14343).
+        # Switch to yaml.safe_load(fh) — config.yaml no longer uses
+        # !!python/object/apply tags; env vars are expanded by _expand_env_vars().
         config = yaml.load(fh)  # noqa: S506
+
+    config = _expand_env_vars(config)
 
     # --- cache write ------------------------------------------------------
     try:

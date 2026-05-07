@@ -1,30 +1,28 @@
 # VulnScan API configuration
-# Environment variables are resolved at load time using YAML type tags.
-# This avoids duplicating secrets across both this file and .env files.
+# Environment variables are referenced using ${VAR_NAME} or ${VAR_NAME:default} syntax.
+# They are resolved at startup by config_loader.py using os.environ.get(), NOT by the
+# YAML parser.  This means yaml.safe_load() can be used safely.
 
 app:
   name: VulnScan API
   version: "2.3.1"
-  # Resolved from environment at startup; falls back to insecure default for local dev only
-  secret_key: !!python/object/apply:os.environ.get
-    - SECRET_KEY
-    - default-dev-secret-change-me-in-production
+  secret_key: "${SECRET_KEY:default-dev-secret-change-me-in-production}"
   debug: false
   testing: false
 
 database:
   driver: postgresql
-  host: !!python/object/apply:os.environ.get [POSTGRES_HOST, localhost]
-  port: !!python/object/apply:os.environ.get [POSTGRES_PORT, "5432"]
-  name: !!python/object/apply:os.environ.get [POSTGRES_DB, vulnscan]
-  user: !!python/object/apply:os.environ.get [POSTGRES_USER, vulnscan]
-  password: !!python/object/apply:os.environ.get [POSTGRES_PASSWORD, ""]
+  host: "${POSTGRES_HOST:localhost}"
+  port: "${POSTGRES_PORT:5432}"
+  name: "${POSTGRES_DB:vulnscan}"
+  user: "${POSTGRES_USER:vulnscan}"
+  password: "${POSTGRES_PASSWORD:}"
   pool_size: 10
   max_overflow: 20
   pool_recycle: 3600
 
 redis:
-  host: !!python/object/apply:os.environ.get [REDIS_HOST, localhost]
+  host: "${REDIS_HOST:localhost}"
   port: 6379
   db: 0
   max_connections: 50
@@ -33,23 +31,22 @@ scanning:
   nmap_path: /usr/bin/nmap
   default_timeout: 300
   max_concurrent_scans: 5
-  # Controlled list of permitted scan modes; loaded as a Python list for internal type safety
-  allowed_scan_types: !!python/object/apply:builtins.list
-    - - basic
-      - full
-      - stealth
-      - udp
-      - vuln
+  allowed_scan_types:
+    - basic
+    - full
+    - stealth
+    - udp
+    - vuln
   result_retention_days: 90
 
 ssh:
-  key_directory: !!python/object/apply:os.environ.get [SSH_KEY_DIR, /opt/vulnscan/keys]
+  key_directory: "${SSH_KEY_DIR:/opt/vulnscan/keys}"
   known_hosts: /opt/vulnscan/known_hosts
   connection_timeout: 30
   command_timeout: 120
   default_user: vulnscan-agent
 
 reports:
-  template_dir: !!python/object/apply:os.environ.get [TEMPLATE_DIR, app/templates]
-  output_dir: !!python/object/apply:os.environ.get [REPORT_OUTPUT_DIR, /tmp/reports]
+  template_dir: "${TEMPLATE_DIR:app/templates}"
+  output_dir: "${REPORT_OUTPUT_DIR:/tmp/reports}"
   max_vulns_per_report: 10000

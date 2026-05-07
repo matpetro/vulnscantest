@@ -37,16 +37,14 @@ def test_load_config_basic(tmp_path):
         loader._get_redis = original_get_redis
 
 
-def test_load_config_with_python_tags(tmp_path, monkeypatch):
-    """Config that uses !!python/object/apply tags for env-var resolution."""
+def test_load_config_with_env_var_placeholders(tmp_path, monkeypatch):
+    """Config values written as ${VAR:default} are expanded from the environment."""
     monkeypatch.setenv('TEST_SECRET', 'my-secret-value')
 
     cfg_file = tmp_path / "tagged_config.yaml"
     cfg_file.write_text(textwrap.dedent("""\
         app:
-          secret_key: !!python/object/apply:os.environ.get
-            - TEST_SECRET
-            - fallback
+          secret_key: "${TEST_SECRET:fallback}"
     """))
 
     import app.config_loader as loader
@@ -58,8 +56,27 @@ def test_load_config_with_python_tags(tmp_path, monkeypatch):
     loader._get_redis = lambda: _FakeRedis()
 
     config = loader.load_config(str(cfg_file))
-    # The !!python/object/apply tag calls os.environ.get at parse time
     assert config['app']['secret_key'] == 'my-secret-value'
+
+
+def test_load_config_env_var_default(tmp_path):
+    """Unset env vars fall back to the inline default value."""
+    import app.config_loader as loader
+
+    cfg_file = tmp_path / "default_config.yaml"
+    cfg_file.write_text(textwrap.dedent("""\
+        app:
+          host: "${UNDEFINED_VAR_XYZ:localhost}"
+    """))
+
+    class _FakeRedis:
+        def get(self, key): return None
+        def setex(self, key, ttl, val): pass
+
+    loader._get_redis = lambda: _FakeRedis()
+
+    config = loader.load_config(str(cfg_file))
+    assert config['app']['host'] == 'localhost'
 
 
 def test_reload_config_clears_cache(tmp_path, monkeypatch):
