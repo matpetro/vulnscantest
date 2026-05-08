@@ -9,8 +9,10 @@ support client-side column sorting.
 import logging
 
 from flask import Blueprint, jsonify, request
+from sqlalchemy import text
 
 from app.extensions import db
+from app.models import Vulnerability
 
 logger = logging.getLogger(__name__)
 
@@ -105,8 +107,6 @@ def bulk_update_status():
 @bp.route('/asset-summary', methods=['GET'])
 def asset_summary():
     """Return per-asset vulnerability counts, filterable by environment."""
-    from sqlalchemy import text
-
     environment = request.args.get('environment', 'production')
 
     # Using text() to allow the multi-line query; the environment parameter
@@ -136,6 +136,5 @@ def asset_summary():
 @bp.route('/<int:vuln_id>', methods=['GET'])
 def get_vulnerability(vuln_id):
     """Fetch a single vulnerability record."""
-    from app.models import Vulnerability
     vuln = Vulnerability.query.get_or_404(vuln_id)
     return jsonify(vuln.to_dict())
