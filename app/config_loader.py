@@ -90,7 +90,7 @@ def load_config(config_path: str = None) -> Dict[str, Any]:
         # yaml.load without an explicit Loader is unsafe (CVE-2020-14343).
         # Switch to yaml.safe_load(fh) — config.yaml no longer uses
         # !!python/object/apply tags; env vars are expanded by _expand_env_vars().
-        config = yaml.load(fh)  # noqa: S506
+        config = yaml.safe_load(fh)  # noqa: S506
 
     config = _expand_env_vars(config)
 
