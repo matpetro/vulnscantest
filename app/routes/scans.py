@@ -56,7 +56,7 @@ def get_scan(scan_id):
     """Retrieve scan job status and result."""
     from app.utils.cache import get_scan_result
 
-    job = ScanJob.query.get_or_404(scan_id)
+    job = db.get_or_404(ScanJob, scan_id)
     result = get_scan_result(scan_id)
 
     return jsonify({

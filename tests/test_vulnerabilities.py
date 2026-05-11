@@ -25,8 +25,8 @@ def seed_data(app):
         _db.session.add(vuln)
         _db.session.commit()
         yield
-        _db.session.query(Vulnerability).delete()
-        _db.session.query(Asset).delete()
+        _db.session.execute(_db.delete(Vulnerability))
+        _db.session.execute(_db.delete(Asset))
         _db.session.commit()
 
 

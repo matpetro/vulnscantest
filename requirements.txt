@@ -1,6 +1,6 @@
 # Flask 2.2.5 – CVE-2023-30861 (set-cookie samesite bypass, fixed in 2.3.2)
 Flask==2.2.5
-Flask-SQLAlchemy==2.5.1
+Flask-SQLAlchemy==3.1.1
 # Werkzeug 2.2.2 – CVE-2023-25577, CVE-2023-23934 (fixed in 2.2.3); Python 3.11 compat (1.x uses removed collections ABCs)
 Werkzeug==2.2.2
 # Jinja2 3.1.1 – CVE-2024-22195 (XSS via autoescape, fixed in 3.1.2); Python 3.11 compat (2.x uses removed collections ABCs)
@@ -25,7 +25,7 @@ paramiko==2.9.3
 cryptography==38.0.4
 
 # Database
-SQLAlchemy==1.4.46
+SQLAlchemy==2.0.16
 psycopg2-binary==2.9.9
 
 # Caching layer
