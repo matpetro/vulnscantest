@@ -76,8 +76,8 @@ def search_vulnerabilities():
 
     logger.debug("Executing vulnerability search: %s", base_query)
 
-    result = db.engine.execute(base_query)
-    rows = [dict(r) for r in result]
+    result = db.session.execute(text(base_query))
+    rows = [dict(r._mapping) for r in result]
 
     return jsonify({'data': rows, 'page': page, 'per_page': per_page})
 
@@ -100,7 +100,8 @@ def bulk_update_status():
         f"WHERE id IN ({ids_clause})"
     )
 
-    db.engine.execute(sql)
+    db.session.execute(text(sql))
+    db.session.commit()
     return jsonify({'updated': len(vuln_ids)})
 
 
@@ -129,8 +130,8 @@ def asset_summary():
         ORDER BY critical_count DESC, high_count DESC
     """)
 
-    result = db.engine.execute(sql)
-    return jsonify([dict(r) for r in result])
+    result = db.session.execute(sql)
+    return jsonify([dict(r._mapping) for r in result])
 
 
 @bp.route('/<int:vuln_id>', methods=['GET'])
