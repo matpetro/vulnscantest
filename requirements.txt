@@ -10,7 +10,7 @@ itsdangerous==2.1.2
 click==8.1.7
 
 # YAML configuration parsing
-PyYAML==5.3.1
+PyYAML==6.0.1
 
 # Image processing for scan evidence attachments
 # Pillow 9.5.0 – CVE-2023-44271 (uncontrolled resource consumption, fixed in 10.0.0); minimum version with Python 3.11 wheels
