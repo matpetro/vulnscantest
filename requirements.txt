@@ -23,7 +23,7 @@ requests==2.32.0
 # SSH client for remote scanner agent management
 paramiko==3.4.0
 # cryptography 38.0.4 – minimum patch release with Python 3.11 wheels (38.0.1-38.0.2 have no cp311 wheel)
-cryptography==38.0.4
+cryptography==42.0.4
 
 # Database
 SQLAlchemy==1.4.46
