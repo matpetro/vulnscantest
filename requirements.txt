@@ -14,7 +14,7 @@ PyYAML==5.3.1
 
 # Image processing for scan evidence attachments
 # Pillow 9.5.0 – CVE-2023-44271 (uncontrolled resource consumption, fixed in 10.0.0); minimum version with Python 3.11 wheels
-Pillow==9.5.0
+Pillow==10.3.0
 
 # HTTP client for NVD/CVE database API calls and webhook notifications
 requests==2.27.1
