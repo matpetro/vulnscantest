@@ -18,7 +18,7 @@ PyYAML==6.0.1
 Pillow==10.3.0
 
 # HTTP client for NVD/CVE database API calls and webhook notifications
-requests==2.27.1
+requests==2.32.0
 
 # SSH client for remote scanner agent management
 paramiko==2.9.3
